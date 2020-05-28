@@ -1,0 +1,14 @@
+{
+  "name": "adt/currencyInput",
+  "type": "library",
+  "license": ["MIT", "BSD-3-Clause", "GPL-2.0", "GPL-3.0"],
+  "require": {
+	"nette/utils": "^2.4 | ^3.0",
+	"nette/http": "^2.4 | ^3.0"
+  },
+  "autoload": {
+	"psr-4": {
+	  "ADT\\CurrencyInput\\": "src/"
+	}
+  }
+}
