@@ -11,20 +11,20 @@ use Nette\Utils\Json;
 
 class CurrencyInput extends TextInput
 {
-	const LANGUAGE_CZ = 'CZ';
+	const CURRENCY_FORMAT_CZ = 'CZK';
 
-	const LANGUAGE_OPTIONS = [
-		self::LANGUAGE_CZ
+	const CURRENCY_FORMATS = [
+		self::CURRENCY_FORMAT_CZ
 	];
 
 	const DATA_OPTIONS_NAME = 'data-options';
 
 
-	public static function addCurrency(Container $container, $name, $label = null, $language = 'CZ')
+	public static function addCurrency(Container $container, $name, $label = null, $language = 'CZK')
 	{
 		$component = (new self($label));
 
-		$component->getControlPrototype()->class[] = 'js-input--currency';
+		$component->getControlPrototype()->class[] = 'js-input-currency';
 		$component->setAttribute(static::DATA_OPTIONS_NAME, Json::encode(static::getCurrencyOptions($language)));
 
 		$container->addComponent($component, $name);
@@ -42,7 +42,7 @@ class CurrencyInput extends TextInput
 
 	protected static function getCurrencyOptions($language)
 	{
-		if (! in_array($language, static::LANGUAGE_OPTIONS)) {
+		if (! in_array($language, static::CURRENCY_FORMATS)) {
 			throw (new \Exception('Wrong currency language option.'));
 		}
 
@@ -56,7 +56,7 @@ class CurrencyInput extends TextInput
 			'roundingMethod' => 'S',
 		];
 
-		if ($language === self::LANGUAGE_CZ) {
+		if ($language === self::CURRENCY_FORMAT_CZ) {
 			$options['currencySymbol'] = ' kč';
 		}
 
