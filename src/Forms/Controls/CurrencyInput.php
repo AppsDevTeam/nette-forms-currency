@@ -11,21 +11,68 @@ use Nette\Utils\Json;
 
 class CurrencyInput extends TextInput
 {
-	const CURRENCY_FORMAT_CZ = 'CZK';
+	const LANGUAGE_CS = 'cs';
+	const LANGUAGE_EN = 'en';
+	const LANGUAGE_SK = 'sk';
+
+	const CURRENCY_CZK = 'CZK';
+	const CURRENCY_EUR = 'EUR';
+	const CURRENCY_EUR_sk = 'EUR_sk';
+	const CURRENCY_USD = 'USD';
+	const CURRENCY_GBP = 'GBP';
 
 	const CURRENCY_FORMATS = [
-		self::CURRENCY_FORMAT_CZ
+		self::CURRENCY_CZK => 'CZK',
+		self::CURRENCY_EUR => 'EUR',
+		self::CURRENCY_EUR_sk => 'EUR_sk',
+		self::CURRENCY_USD => 'USD',
+		self::CURRENCY_GBP => 'GBP',
+	];
+
+	public static $defaultLanguage = self::LANGUAGE_CS;
+	public static $defaultCurrency = self::CURRENCY_CZK;
+
+	public static $symbols = [
+		self::CURRENCY_CZK => ' Kč',
+		self::CURRENCY_EUR => '€',
+		self::CURRENCY_EUR_sk => ' €',
+		self::CURRENCY_USD => '$',
+		self::CURRENCY_GBP => '£',
+	];
+
+	public static $formats = [
+		self::LANGUAGE_CS => [
+			'digitGroupSeparator' => ' ',
+			'decimalCharacter' => ',',
+			'decimalCharacterAlternative' => '.',
+			'currencySymbolPlacement' => 's',
+			'roundingMethod' => 'S',
+		],
+		self::LANGUAGE_EN => [
+			'digitGroupSeparator' => ',',
+			'decimalCharacter' => '.',
+			'decimalCharacterAlternative' => '.',
+			'currencySymbolPlacement' => 'p',
+			'roundingMethod' => 'S',
+		],
+		self::LANGUAGE_SK => [
+			'digitGroupSeparator' => ' ',
+			'decimalCharacter' => ',',
+			'decimalCharacterAlternative' => '.',
+			'currencySymbolPlacement' => 's',
+			'roundingMethod' => 'S',
+		],
 	];
 
 	const DATA_OPTIONS_NAME = 'data-options';
 
 
-	public static function addCurrency(Container $container, $name, $label = null, $language = 'CZK')
+	public static function addCurrency(Container $container, $name, $label = null, $currency = null)
 	{
 		$component = (new self($label));
 
 		$component->getControlPrototype()->class[] = 'js-input-currency';
-		$component->setAttribute(static::DATA_OPTIONS_NAME, Json::encode(static::getCurrencyOptions($language)));
+		$component->setAttribute(static::DATA_OPTIONS_NAME, Json::encode(static::getCurrencyOptions($currency ?? static::$defaultCurrency)));
 
 		$container->addComponent($component, $name);
 
@@ -40,25 +87,11 @@ class CurrencyInput extends TextInput
 	}
 
 
-	protected static function getCurrencyOptions($language)
+	protected static function getCurrencyOptions($currency)
 	{
-		if (! in_array($language, static::CURRENCY_FORMATS)) {
-			throw (new \Exception('Wrong currency language option.'));
-		}
-
 //		https://github.com/autoNumeric/autoNumeric#options
-		$options = [
-			'digitGroupSeparator' => ' ',
-			'decimalCharacter' => ',',
-			'decimalCharacterAlternative' => '.',
-			'currencySymbol' => '\u202f€',
-			'currencySymbolPlacement' => 's',
-			'roundingMethod' => 'S',
-		];
-
-		if ($language === self::CURRENCY_FORMAT_CZ) {
-			$options['currencySymbol'] = ' kč';
-		}
+		$options = static::$formats[static::$defaultLanguage];
+		$options['currencySymbol'] = static::$symbols[$currency];
 
 		return $options;
 	}

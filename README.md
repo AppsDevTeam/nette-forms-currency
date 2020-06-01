@@ -27,7 +27,7 @@ This allows you to call the method `addCurrency` on class `Nette\Forms\Form` or 
 It's very simple:
 
 ```php
-$form->addCurrency('currency', 'label', \ADT\Forms\Controls\CurrencyInput::CURRENCY_FORMAT_CZ);
+$form->addCurrency('currency', 'label', \ADT\Forms\Controls\CurrencyInput::CURRENCY_CZK);
   
 $form->onSuccess[] = function ($form) {
 	$form['currency']->getValue(); // returns eg. from "100 000 000,56 kč" => "100000000.56" 
