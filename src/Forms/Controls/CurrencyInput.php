@@ -17,41 +17,31 @@ class CurrencyInput extends TextInput
 
 	const CURRENCY_CZK = 'CZK';
 	const CURRENCY_EUR = 'EUR';
-	const CURRENCY_EUR_sk = 'EUR_sk';
 	const CURRENCY_USD = 'USD';
 	const CURRENCY_GBP = 'GBP';
-
-	const CURRENCY_FORMATS = [
-		self::CURRENCY_CZK => 'CZK',
-		self::CURRENCY_EUR => 'EUR',
-		self::CURRENCY_EUR_sk => 'EUR_sk',
-		self::CURRENCY_USD => 'USD',
-		self::CURRENCY_GBP => 'GBP',
-	];
 
 	public static $defaultLanguage = self::LANGUAGE_CS;
 	public static $defaultCurrency = self::CURRENCY_CZK;
 
 	public static $symbols = [
-		self::CURRENCY_CZK => ' Kč',
+		self::CURRENCY_CZK => 'Kč',
 		self::CURRENCY_EUR => '€',
-		self::CURRENCY_EUR_sk => ' €',
 		self::CURRENCY_USD => '$',
 		self::CURRENCY_GBP => '£',
 	];
 
-	public static $formats = [
+	protected static $formats = [
 		self::LANGUAGE_CS => [
 			'digitGroupSeparator' => ' ',
 			'decimalCharacter' => ',',
 			'decimalCharacterAlternative' => '.',
 			'currencySymbolPlacement' => 's',
 			'roundingMethod' => 'S',
+			'currencySymbolSeparator' => ' ',
 		],
 		self::LANGUAGE_EN => [
 			'digitGroupSeparator' => ',',
 			'decimalCharacter' => '.',
-			'decimalCharacterAlternative' => '.',
 			'currencySymbolPlacement' => 'p',
 			'roundingMethod' => 'S',
 		],
@@ -61,6 +51,7 @@ class CurrencyInput extends TextInput
 			'decimalCharacterAlternative' => '.',
 			'currencySymbolPlacement' => 's',
 			'roundingMethod' => 'S',
+			'currencySymbolSeparator' => ' ',
 		],
 	];
 
@@ -71,7 +62,7 @@ class CurrencyInput extends TextInput
 	{
 		$component = (new self($label));
 
-		$component->getControlPrototype()->class[] = 'js-input-currency';
+		$component->getControlPrototype()->class[] = 'js-nette-forms-currency';
 		$component->setAttribute(static::DATA_OPTIONS_NAME, Json::encode(static::getCurrencyOptions($currency ?? static::$defaultCurrency)));
 
 		$container->addComponent($component, $name);
@@ -92,6 +83,16 @@ class CurrencyInput extends TextInput
 //		https://github.com/autoNumeric/autoNumeric#options
 		$options = static::$formats[static::$defaultLanguage];
 		$options['currencySymbol'] = static::$symbols[$currency];
+		if (isset($options['currencySymbolSeparator'])) {
+			// suffix
+			if ($options['currencySymbolPlacement'] === 's') {
+				$options['currencySymbol'] = $options['currencySymbolSeparator'] . $options['currencySymbol'];
+			}
+			// prefix
+			if ($options['currencySymbolPlacement']) {
+				$options['currencySymbol'] .= $options['currencySymbolSeparator'];
+			}
+		}
 
 		return $options;
 	}
@@ -130,6 +131,24 @@ class CurrencyInput extends TextInput
 		$removedThousandSeparator = preg_replace('/(\\' . $options->digitGroupSeparator . ')(?=[0-9]{3,}$)/', '',  $stringWithDecimalChar);
 
 		return (float) str_replace(',', '.', $removedThousandSeparator);
+	}
+
+	protected static function setFormat(string $language, array $options)
+	{
+		$required = [
+			'digitGroupSeparator',
+			'decimalCharacter',
+			'currencySymbolPlacement',
+			'roundingMethod',
+		];
+
+		foreach ($required as $option) {
+			if (! isset($options[$option])) {
+				throw new \Exception('Missing required option ' . $option . '.');
+			}
+		}
+
+		static::$formats[$language] = $options;
 	}
 
 

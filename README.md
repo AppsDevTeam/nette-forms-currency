@@ -1,12 +1,7 @@
 # Currency input for Nette Forms
+Nette component for creating currency input.
 
 ## Installation
-
-
-Install **[autoNumeric](https://github.com/autoNumeric/autoNumeric)** library.
-Please note that this library is required!
-
-Copy `CurrencyInput.js` into your public directory and then link it into your `@layout.latte` file. 
 
 Install currency input library via composer:
 
@@ -21,6 +16,22 @@ and register method extension in `bootstrap.php`:
 ```
 
 This allows you to call the method `addCurrency` on class `Nette\Forms\Form` or `Nette\Forms\Container`.
+
+For live formatting functionality its necessary to create custom js. <br> You can use our example bellow.
+Install and link following libraries: <br>
+[nette.ajax.js](https://github.com/vojtech-dobes/nette.ajax.js) <br>
+[autoNumeric](https://github.com/autoNumeric/autoNumeric)
+
+Initialize autoNumeric on currency input
+```js
+$(function () {
+	$.nette.ext('live').after(function ($element) {
+		$element.find('.js-nette-forms-currency').each(function () {
+			new AutoNumeric(this, JSON.parse(this.dataset.options));
+		});
+	});
+})
+```
 
 ## Usage
 
