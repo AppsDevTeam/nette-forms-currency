@@ -6,6 +6,7 @@ namespace ADT\Forms\Controls;
 use Nette\Forms\Container;
 use Nette\Forms\Controls\TextInput;
 use Nette\Forms\Form;
+use Nette\Utils\ArrayHash;
 use Nette\Utils\Json;
 
 
@@ -22,6 +23,7 @@ class CurrencyInput extends TextInput
 
 	public static $defaultLanguage = self::LANGUAGE_CS;
 	public static $defaultCurrency = self::CURRENCY_CZK;
+	public static $defaultDataAttributeName = 'data-currency-input';
 
 	public static $symbols = [
 		self::CURRENCY_CZK => 'Kč',
@@ -30,7 +32,7 @@ class CurrencyInput extends TextInput
 		self::CURRENCY_GBP => '£',
 	];
 
-	protected static $formats = [
+	public static $formats = [
 		self::LANGUAGE_CS => [
 			'digitGroupSeparator' => ' ',
 			'decimalCharacter' => ',',
@@ -55,15 +57,16 @@ class CurrencyInput extends TextInput
 		],
 	];
 
-	const DATA_OPTIONS_NAME = 'data-options';
+	protected $currency;
 
+	public function setCurrency($currency) {
+		$this->currency = $currency;
+	}
 
 	public static function addCurrency(Container $container, $name, $label = null, $currency = null)
 	{
 		$component = (new self($label));
-
-		$component->getControlPrototype()->class[] = 'js-nette-forms-currency';
-		$component->setAttribute(static::DATA_OPTIONS_NAME, Json::encode(static::getCurrencyOptions($currency ?? static::$defaultCurrency)));
+		$component->setCurrency($currency);
 
 		$container->addComponent($component, $name);
 
@@ -78,23 +81,42 @@ class CurrencyInput extends TextInput
 	}
 
 
-	protected static function getCurrencyOptions($currency)
+	public function getOptions()
 	{
 //		https://github.com/autoNumeric/autoNumeric#options
 		$options = static::$formats[static::$defaultLanguage];
-		$options['currencySymbol'] = static::$symbols[$currency];
-		if (isset($options['currencySymbolSeparator'])) {
-			// suffix
-			if ($options['currencySymbolPlacement'] === 's') {
-				$options['currencySymbol'] = $options['currencySymbolSeparator'] . $options['currencySymbol'];
+		$options['currencySymbol'] = static::$symbols[$this->currency ?? static::$defaultCurrency];
+		if (isset($options['currencySymbolPlacement'])) {
+			if (isset($options['currencySymbolSeparator'])) {
+				// suffix
+				if ($options['currencySymbolPlacement'] === 's') {
+					$options['currencySymbol'] = $options['currencySymbolSeparator'] . $options['currencySymbol'];
+				}
+				// prefix
+				elseif ($options['currencySymbolPlacement'] === 'p') {
+					$options['currencySymbol'] .= $options['currencySymbolSeparator'];
+				}
+				else {
+					throw new \InvalidArgumentException("Parameter 'currencySymbolPlacement' must be either 's' or 'p'.");
+				}
 			}
-			// prefix
-			if ($options['currencySymbolPlacement']) {
-				$options['currencySymbol'] .= $options['currencySymbolSeparator'];
-			}
+		} else {
+			$options['currencySymbol'] = '';
 		}
 
 		return $options;
+	}
+
+
+	/**
+	 * Generates control's HTML element.
+	 * @return Nette\Utils\Html
+	 */
+	public function getControl()
+	{
+		return parent::getControl()->addAttributes([
+			static::$defaultDataAttributeName => $this->getOptions(),
+		]);
 	}
 
 
@@ -119,8 +141,7 @@ class CurrencyInput extends TextInput
 
 	public function parseAmount($amount)
 	{
-		$optionsName = static::DATA_OPTIONS_NAME;
-		$options = $this->control->$optionsName ? Json::decode($this->control->$optionsName) : [];
+		$options = ArrayHash::from($this->getOptions());
 
 		$cleanString = preg_replace('/([^0-9\.,])/i', '', $amount);
 		$onlyNumbersString = preg_replace('/([^0-9])/i', '', $amount);
@@ -138,12 +159,11 @@ class CurrencyInput extends TextInput
 		$required = [
 			'digitGroupSeparator',
 			'decimalCharacter',
-			'currencySymbolPlacement',
 			'roundingMethod',
 		];
 
 		foreach ($required as $option) {
-			if (! isset($options[$option])) {
+			if (! array_key_exists($option, $options)) {
 				throw new \Exception('Missing required option ' . $option . '.');
 			}
 		}
