@@ -1,14 +1,12 @@
 <?php
 
-
 namespace ADT\Forms\Controls;
 
 use Nette\Forms\Container;
 use Nette\Forms\Controls\TextInput;
 use Nette\Forms\Form;
-use Nette\Utils\ArrayHash;
+use Nette\Utils\Html;
 use Nette\Utils\Json;
-
 
 class CurrencyInput extends TextInput
 {
@@ -32,47 +30,40 @@ class CurrencyInput extends TextInput
 		self::CURRENCY_GBP => '£',
 	];
 
-	public static $formats = [
+	protected static $formats = [
 		self::LANGUAGE_CS => [
 			'digitGroupSeparator' => ' ',
 			'decimalCharacter' => ',',
 			'decimalCharacterAlternative' => '.',
 			'currencySymbolPlacement' => 's',
-			'roundingMethod' => 'S',
 			'currencySymbolSeparator' => ' ',
+			'decimalPlaces' => 0,
+			'allowDecimalPadding' => 'floats'
 		],
 		self::LANGUAGE_EN => [
 			'digitGroupSeparator' => ',',
 			'decimalCharacter' => '.',
 			'currencySymbolPlacement' => 'p',
-			'roundingMethod' => 'S',
+			'currencySymbolSeparator' => '',
 		],
 		self::LANGUAGE_SK => [
 			'digitGroupSeparator' => ' ',
 			'decimalCharacter' => ',',
 			'decimalCharacterAlternative' => '.',
 			'currencySymbolPlacement' => 's',
-			'roundingMethod' => 'S',
 			'currencySymbolSeparator' => ' ',
 		],
 	];
 
-	protected $currency;
-
-	public function setCurrency($currency) {
-		$this->currency = $currency;
-	}
-
 	public static function addCurrency(Container $container, $name, $label = null, $currency = null)
 	{
 		$component = (new self($label));
-		$component->setCurrency($currency);
+		$component->setOption('currency', $currency);
 
 		$container->addComponent($component, $name);
 
 		return $component;
 	}
-
 
 	public static function register()
 	{
@@ -80,45 +71,35 @@ class CurrencyInput extends TextInput
 		Container::extensionMethod('addCurrency', [__CLASS__, 'addCurrency']);
 	}
 
-
-	public function getOptions()
+	public function getFormat()
 	{
-//		https://github.com/autoNumeric/autoNumeric#options
 		$options = static::$formats[static::$defaultLanguage];
-		$options['currencySymbol'] = static::$symbols[$this->currency ?? static::$defaultCurrency];
-		if (isset($options['currencySymbolPlacement'])) {
-			if (isset($options['currencySymbolSeparator'])) {
-				// suffix
-				if ($options['currencySymbolPlacement'] === 's') {
-					$options['currencySymbol'] = $options['currencySymbolSeparator'] . $options['currencySymbol'];
-				}
-				// prefix
-				elseif ($options['currencySymbolPlacement'] === 'p') {
-					$options['currencySymbol'] .= $options['currencySymbolSeparator'];
-				}
-				else {
-					throw new \InvalidArgumentException("Parameter 'currencySymbolPlacement' must be either 's' or 'p'.");
-				}
+		$options['currencySymbol'] = static::$symbols[$this->getOption('currency') ?? static::$defaultCurrency];
+
+		if ($options['currencySymbol'] !== '') {
+			// suffix
+			if ($options['currencySymbolPlacement'] === 's') {
+				$options['currencySymbol'] = $options['currencySymbolSeparator'] . $options['currencySymbol'];
+			} 
+			// prefix
+			else {
+				$options['currencySymbol'] .= $options['currencySymbolSeparator'];
 			}
-		} else {
-			$options['currencySymbol'] = '';
 		}
 
 		return $options;
 	}
 
-
 	/**
 	 * Generates control's HTML element.
 	 * @return Nette\Utils\Html
 	 */
-	public function getControl()
+	public function getControl(): Html
 	{
 		return parent::getControl()->addAttributes([
-			static::$defaultDataAttributeName => $this->getOptions(),
+			static::$defaultDataAttributeName => $this->getFormat(),
 		]);
 	}
-
 
 	/**
 	 * Sets control's value.
@@ -127,49 +108,39 @@ class CurrencyInput extends TextInput
 	 */
 	public function setValue($value)
 	{
-		if ($value === null) {
-			$value = '';
-		} elseif (!is_scalar($value) && !method_exists($value, '__toString')) {
-			throw new Nette\InvalidArgumentException(sprintf("Value must be scalar or null, %s given in field '%s'.", gettype($value), $this->name));
-		}
-		$this->value = $value ? $this->parseAmount($value) : '';
+		parent::setValue($value);
+
+		$this->value = $value ? $this->parseAmount($value) : $value;
 		$this->rawValue = (string) $value;
 
 		return $this;
 	}
 
-
 	public function parseAmount($amount)
 	{
-		$options = ArrayHash::from($this->getOptions());
+		$options = $this->getFormat();
 
 		$cleanString = preg_replace('/([^0-9\.,])/i', '', $amount);
 		$onlyNumbersString = preg_replace('/([^0-9])/i', '', $amount);
 
 		$separatorsCountToBeErased = strlen($cleanString) - strlen($onlyNumbersString) - 1;
 
-		$stringWithDecimalChar = preg_replace('/([\\' . $options->decimalCharacter . '\\' . $options->decimalCharacterAlternative . '])/', '', $cleanString, $separatorsCountToBeErased);
-		$removedThousandSeparator = preg_replace('/(\\' . $options->digitGroupSeparator . ')(?=[0-9]{3,}$)/', '',  $stringWithDecimalChar);
+		$stringWithDecimalChar = preg_replace('/([\\' . $options['decimalCharacter'] . '\\' . $options['decimalCharacterAlternative'] . '])/', '', $cleanString, $separatorsCountToBeErased);
+		$removedThousandSeparator = preg_replace('/(\\' . $options['digitGroupSeparator'] . ')(?=[0-9]{3,}$)/', '',  $stringWithDecimalChar);
 
 		return (float) str_replace(',', '.', $removedThousandSeparator);
 	}
 
 	protected static function setFormat(string $language, array $options)
 	{
-		$required = [
-			'digitGroupSeparator',
-			'decimalCharacter',
-			'roundingMethod',
-		];
+		$options = array_merge(static::$formats[$language], $options);
 
-		foreach ($required as $option) {
-			if (! array_key_exists($option, $options)) {
-				throw new \Exception('Missing required option ' . $option . '.');
+		if ($options['currencySymbol'] !== '') {
+			if ($options['currencySymbolPlacement'] !== 's' || $options['currencySymbolPlacement'] === 'p') {
+				throw new \InvalidArgumentException("Option 'currencySymbolPlacement' must be either 's' or 'p'.");
 			}
 		}
 
 		static::$formats[$language] = $options;
 	}
-
-
 }
