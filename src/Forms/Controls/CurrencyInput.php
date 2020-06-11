@@ -131,7 +131,7 @@ class CurrencyInput extends TextInput
 		return (float) str_replace(',', '.', $removedThousandSeparator);
 	}
 
-	protected static function setFormat(string $language, array $options)
+	public static function setFormat(string $language, array $options)
 	{
 		$options = array_merge(static::$formats[$language], $options);
 
