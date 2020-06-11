@@ -30,11 +30,19 @@ class CurrencyInput extends TextInput
 		self::CURRENCY_GBP => '£',
 	];
 
+	public static $codes = [
+		self::CURRENCY_CZK => 'CZK',
+		self::CURRENCY_EUR => 'EUR',
+		self::CURRENCY_USD => 'USD',
+		self::CURRENCY_GBP => 'GBP',
+	];
+
 	protected static $formats = [
 		self::LANGUAGE_CS => [
 			'digitGroupSeparator' => ' ',
 			'decimalCharacter' => ',',
 			'decimalCharacterAlternative' => '.',
+			'currencyExpression' => 'symbol',
 			'currencySymbolPlacement' => 's',
 			'currencySymbolSeparator' => ' ',
 			'decimalPlaces' => 0,
@@ -43,6 +51,7 @@ class CurrencyInput extends TextInput
 		self::LANGUAGE_EN => [
 			'digitGroupSeparator' => ',',
 			'decimalCharacter' => '.',
+			'currencyExpression' => 'symbol',
 			'currencySymbolPlacement' => 'p',
 			'currencySymbolSeparator' => '',
 		],
@@ -50,6 +59,7 @@ class CurrencyInput extends TextInput
 			'digitGroupSeparator' => ' ',
 			'decimalCharacter' => ',',
 			'decimalCharacterAlternative' => '.',
+			'currencyExpression' => 'symbol',
 			'currencySymbolPlacement' => 's',
 			'currencySymbolSeparator' => ' ',
 		],
@@ -74,7 +84,17 @@ class CurrencyInput extends TextInput
 	public function getFormat()
 	{
 		$options = static::$formats[static::$defaultLanguage];
-		$options['currencySymbol'] = static::$symbols[$this->getOption('currency') ?? static::$defaultCurrency];
+
+		switch ($options['currencyExpression']) {
+			case 'symbol':
+				$options['currencySymbol'] = static::$symbols[$this->getOption('currency') ?? static::$defaultCurrency];
+				break;
+			case 'code':
+				$options['currencySymbol'] = static::$codes[$this->getOption('currency') ?? static::$defaultCurrency];
+				break;
+			default:
+				$options['currencySymbol'] = '';
+		}
 
 		if ($options['currencySymbol'] !== '') {
 			// suffix
@@ -135,10 +155,20 @@ class CurrencyInput extends TextInput
 	{
 		$options = array_merge(static::$formats[$language], $options);
 
-		if ($options['currencySymbol'] !== '') {
-			if ($options['currencySymbolPlacement'] !== 's' || $options['currencySymbolPlacement'] === 'p') {
-				throw new \InvalidArgumentException("Option 'currencySymbolPlacement' must be either 's' or 'p'.");
+		foreach ($options as $key => $value) {
+			if ($value === null) {
+				throw new \InvalidArgumentException("Option '$key' must not be null.");
 			}
+		}
+
+		bd ($options);
+
+		if ($options['currencyExpression'] !== false && $options['currencyExpression'] !== 'symbol' && $options['currencyExpression'] !== 'code') {
+			throw new \InvalidArgumentException("Option 'currencyExpression' must be either 'symbol', 'code' or false.");
+		}
+
+		if ($options['currencySymbolPlacement'] !== 's' && $options['currencySymbolPlacement'] !== 'p') {
+			throw new \InvalidArgumentException("Option 'currencySymbolPlacement' must be either 's' or 'p'.");
 		}
 
 		static::$formats[$language] = $options;
