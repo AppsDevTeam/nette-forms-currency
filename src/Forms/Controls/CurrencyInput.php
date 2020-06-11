@@ -161,8 +161,6 @@ class CurrencyInput extends TextInput
 			}
 		}
 
-		bd ($options);
-
 		if ($options['currencyExpression'] !== false && $options['currencyExpression'] !== 'symbol' && $options['currencyExpression'] !== 'code') {
 			throw new \InvalidArgumentException("Option 'currencyExpression' must be either 'symbol', 'code' or false.");
 		}
