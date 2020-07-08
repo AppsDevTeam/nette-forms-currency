@@ -116,9 +116,9 @@ class CurrencyInput extends TextInput
 	 */
 	public function getControl(): Html
 	{
-		return parent::getControl()->addAttributes([
-			static::$defaultDataAttributeName => $this->getFormat(),
-		]);
+		return parent::getControl()
+			->addAttributes([static::$defaultDataAttributeName => $this->getFormat()])
+			->setAttribute('type', 'text');
 	}
 
 	/**
