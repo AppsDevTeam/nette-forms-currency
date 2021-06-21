@@ -52,4 +52,4 @@ And in latte:
 ```
 
 
-To turn on autocomplete in IDE, add `@method CurrencyInput addCurrency($name, $label = null, $language = 'cs')` to your base form.
+To turn on autocomplete in IDE, add `@method CurrencyInput addCurrency($name, $label = null, $currency = null, $language = null)` to your base form.
