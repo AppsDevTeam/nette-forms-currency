@@ -65,10 +65,11 @@ class CurrencyInput extends TextInput
 		],
 	];
 
-	public static function addCurrency(Container $container, $name, $label = null, $currency = null)
+	public static function addCurrency(Container $container, $name, $label = null, $currency = null, $language = null)
 	{
 		$component = (new self($label));
 		$component->setOption('currency', $currency);
+		$component->setOption('language', $language);
 
 		$container->addComponent($component, $name);
 
@@ -83,7 +84,7 @@ class CurrencyInput extends TextInput
 
 	public function getFormat()
 	{
-		$options = static::$formats[static::$defaultLanguage];
+		$options =  static::$formats[$this->getOption('language')] ?? static::$formats[static::$defaultLanguage];
 
 		switch ($options['currencyExpression']) {
 			case 'symbol':
