@@ -23,6 +23,8 @@ class CurrencyInput extends TextInput
 	public static $defaultCurrency = self::CURRENCY_CZK;
 	public static $defaultDataAttributeName = 'data-currency-input';
 
+	protected ?int $decimalPlaces = null;
+
 	public static $symbols = [
 		self::CURRENCY_CZK => 'Kč',
 		self::CURRENCY_EUR => '€',
@@ -86,6 +88,10 @@ class CurrencyInput extends TextInput
 	{
 		$options =  static::$formats[$this->getOption('language')] ?? static::$formats[static::$defaultLanguage];
 
+		if ($this->decimalPlaces) {
+			$options['decimalPlaces'] = $this->decimalPlaces;
+		}
+
 		switch ($options['currencyExpression']) {
 			case 'symbol':
 				$options['currencySymbol'] = static::$symbols[$this->getOption('currency') ?? static::$defaultCurrency];
@@ -136,6 +142,14 @@ class CurrencyInput extends TextInput
 
 		return $this;
 	}
+
+
+	public function setDecimalPlaces(int $decimalPlaces): self
+	{
+		$this->decimalPlaces = $decimalPlaces;
+		return $this;
+	}
+
 
 	public function parseAmount($amount)
 	{
