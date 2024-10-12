@@ -21,7 +21,7 @@ class CurrencyInput extends TextInput
 
 	public static $defaultLanguage = self::LANGUAGE_CS;
 	public static $defaultCurrency = self::CURRENCY_CZK;
-	public static $defaultDataAttributeName = 'data-currency-input';
+	public static $defaultDataAttributeName = 'data-adt-currency-input';
 
 	protected ?int $decimalPlaces = null;
 
